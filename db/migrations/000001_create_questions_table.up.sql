@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS questions (
+    id SERIAL PRIMARY KEY,
+    ulid TEXT UNIQUE NOT NULL CHECK (ulid ~ '^[0-9A-HJKMNP-TV-Z]{26}$'),
+    label VARCHAR(10) NOT NULL,
+    text TEXT NOT NULL
+);

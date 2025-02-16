@@ -1,0 +1,177 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "A RESTful API to manage Questionnaires.",
+    "title": "Questionnaire API",
+    "contact": {
+      "name": "Tiago Melo",
+      "email": "tiagoharris@gmail.com"
+    },
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/api/v1/questionnaire": {
+      "get": {
+        "tags": [
+          "questionnaire"
+        ],
+        "summary": "Get questionnaire.",
+        "operationId": "questionnaire",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQuestionnaireResponse"
+          },
+          "500": {
+            "description": " internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/questionnaire/answers": {
+      "post": {
+        "tags": [
+          "answers"
+        ],
+        "summary": "Answers the questionnaire.",
+        "operationId": "Answer",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/GetRecommendationsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/answerQuestionnaireResponse"
+          },
+          "400": {
+            "description": " missing required fields"
+          },
+          "500": {
+            "description": " internal server error"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Answer": {
+      "type": "object",
+      "title": "Answer represents an answer choice, with a possible next question.",
+      "properties": {
+        "next_question_ulid": {
+          "type": "string",
+          "x-go-name": "NextQuestionULID"
+        },
+        "text": {
+          "type": "string",
+          "x-go-name": "Text"
+        },
+        "ulid": {
+          "type": "string",
+          "x-go-name": "ULID"
+        }
+      },
+      "x-go-package": "github.com/tiagomelo/questionnaire-rest-api/db/questionnaire"
+    },
+    "GetRecommendationsRequest": {
+      "type": "object",
+      "title": "GetRecommendationsRequest represents the request body for the GetRecommendations handler.",
+      "properties": {
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Answers"
+        }
+      },
+      "x-go-package": "github.com/tiagomelo/questionnaire-rest-api/handlers/v1/answers"
+    },
+    "Question": {
+      "type": "object",
+      "title": "Question represents a single question with its possible answers.",
+      "properties": {
+        "answers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "x-go-name": "Answers"
+        },
+        "label": {
+          "type": "string",
+          "x-go-name": "Label"
+        },
+        "text": {
+          "type": "string",
+          "x-go-name": "Text"
+        },
+        "ulid": {
+          "type": "string",
+          "x-go-name": "ULID"
+        }
+      },
+      "x-go-package": "github.com/tiagomelo/questionnaire-rest-api/db/questionnaire"
+    },
+    "Questionnaire": {
+      "type": "object",
+      "title": "Questionnaire represents the entire questionnaire.",
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Question"
+          },
+          "x-go-name": "Questions"
+        }
+      },
+      "x-go-package": "github.com/tiagomelo/questionnaire-rest-api/db/questionnaire"
+    },
+    "RecommendationsResponse": {
+      "type": "object",
+      "title": "RecommendationsResponse represents the result of processing user answers.",
+      "properties": {
+        "exclusion_reason": {
+          "type": "string",
+          "x-go-name": "ExclusionReason"
+        },
+        "next_question_ulid": {
+          "type": "string",
+          "x-go-name": "NextQuestionULID"
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Recommendations"
+        }
+      },
+      "x-go-package": "github.com/tiagomelo/questionnaire-rest-api/db/answers"
+    }
+  },
+  "responses": {
+    "answerQuestionnaireResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/RecommendationsResponse"
+      }
+    },
+    "getQuestionnaireResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Questionnaire"
+      }
+    }
+  }
+}

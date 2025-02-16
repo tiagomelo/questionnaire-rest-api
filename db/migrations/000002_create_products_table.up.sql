@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS products (
+    id SERIAL PRIMARY KEY,
+    ulid TEXT UNIQUE NOT NULL CHECK (ulid ~ '^[0-9A-HJKMNP-TV-Z]{26}$'),
+    name TEXT NOT NULL,
+    identifier TEXT UNIQUE NOT NULL
+);

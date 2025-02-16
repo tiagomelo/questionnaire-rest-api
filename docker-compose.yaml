@@ -1,0 +1,37 @@
+services:
+  psql_questionnaire_db:
+    image: postgres
+    container_name: ${POSTGRES_DATABASE_CONTAINER_NAME}
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - psql_questionnaire_db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - psqldb_questionnaire_db_network
+  
+  psql_questionnaire_test_db:
+    image: postgres
+    container_name: ${POSTGRES_TEST_DATABASE_CONTAINER_NAME}
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5433:5432"
+    volumes:
+      - psql_questionnaire_test_db_data:/var/lib/postgresql/data
+    networks:
+      - psqldb_questionnaire_test_db_network
+
+networks:
+  psqldb_questionnaire_db_network:
+    driver: bridge
+  psqldb_questionnaire_test_db_network:
+    driver: bridge
+
+volumes:
+  psql_questionnaire_db_data:
+  psql_questionnaire_test_db_data:
