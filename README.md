@@ -302,11 +302,136 @@ latest_answer AS (
 
 4. Although the Frontend will control the questionnaire flux, I've implemented at least a basic answers sequence check to guard the backend. This logic could be revisited at any time, for sure. 
 
-## data model
+## data model explanation
 
-It was generated using [dbdiagram.io](https://dbdiagram.io/).
+The ERD was generated using [dbdiagram.io](https://dbdiagram.io/) and is structured to support a dynamic questionnaire flow with recommendations and exclusions. Below is a detailed breakdown of each table and its purpose.
 
 ![erd](erd.png)
+
+### **1. `questions`**
+This table holds the list of **questions** in the questionnaire.
+
+| Column  | Type                  | Description |
+|---------|-----------------------|-------------|
+| `id`    | `integer NN`          | Primary key (auto-incremented). |
+| `ulid`  | `text NN`             | Unique identifier for the question (ULID). |
+| `label` | `character varying(10) NN` | Short label for the question (e.g., "Q1", "Q2a"). |
+| `text`  | `text NN`             | Full question text. |
+
+**purpose**: Defines each question in the questionnaire.
+
+---
+
+### **2. `answers`**
+This table stores the possible **answers** to the questions.
+
+| Column                 | Type      | Description |
+|------------------------|-----------|-------------|
+| `id`                  | `integer NN` | Primary key (auto-incremented). |
+| `ulid`                | `text NN`  | Unique identifier for the answer (ULID). |
+| `question_ulid`       | `text NN`  | Foreign key referencing `questions.ulid`. |
+| `text`                | `text NN`  | Answer text (e.g., "Yes", "No"). |
+| `next_question_ulid`  | `text`     | If answered, which question should be asked next? |
+| `previous_question_ulid` | `text`  | The question that this answer belongs to. |
+
+**purpose**: Holds answers linked to questions, allowing the system to determine the next step based on user input.
+
+---
+
+### **3. `answers_flow`**
+This table maps the **flow of answers**, defining valid sequences.
+
+| Column               | Type      | Description |
+|----------------------|-----------|-------------|
+| `id`                | `integer NN` | Primary key (auto-incremented). |
+| `answer_ulid`       | `text NN`  | Foreign key referencing `answers.ulid`. |
+| `previous_answer_ulid` | `text`  | Foreign key referencing the valid previous answer. |
+| `next_question_ulid` | `text`    | Foreign key referencing `questions.ulid`, indicating the next question. |
+
+**purpose**: Defines the allowed transitions between answers, ensuring users follow a valid path.
+
+---
+
+### **4. `exclusions`**
+This table lists **conditions that exclude recommendations**.
+
+| Column       | Type      | Description |
+|-------------|-----------|-------------|
+| `answer_ulid` | `text NN` | Foreign key referencing `answers.ulid`. |
+| `reason`     | `text NN`  | Explanation for the exclusion. |
+
+**purpose**: If an answer matches an exclusion, no recommendation is provided.
+
+---
+
+### **5. `recommendations`**
+This table stores possible **recommendations** based on answers.
+
+| Column         | Type      | Description |
+|---------------|-----------|-------------|
+| `id`          | `integer NN` | Primary key (auto-incremented). |
+| `ulid`        | `text NN`  | Unique identifier for the recommendation (ULID). |
+| `product_ulid` | `text NN` | Foreign key referencing `products.ulid`. |
+
+**purpose**: Defines the available treatment/product recommendations.
+
+---
+
+### **6. `answer_recommendations`**
+This is a **join table** linking answers to recommendations.
+
+| Column              | Type      | Description |
+|---------------------|-----------|-------------|
+| `answer_ulid`      | `text NN`  | Foreign key referencing `answers.ulid`. |
+| `recommendation_ulid` | `text NN` | Foreign key referencing `recommendations.ulid`. |
+
+**purpose**: Maps which answers trigger specific recommendations.
+
+---
+
+### **7. `products`**
+This table stores **products** that can be recommended.
+
+| Column    | Type      | Description |
+|-----------|-----------|-------------|
+| `id`      | `integer NN` | Primary key (auto-incremented). |
+| `ulid`    | `text NN`  | Unique identifier for the product (ULID). |
+| `name`    | `text NN`  | Product name (e.g., "Sildenafil 50mg"). |
+| `identifier` | `text NN` | Alternative identifier (e.g., SKU or internal code). |
+
+**purpose**: Manages a list of available treatment options.
+
+---
+
+### **8. `schema_migrations`**
+This table tracks **database migrations**.
+
+| Column  | Type      | Description |
+|---------|-----------|-------------|
+| `version` | `bigint NN` | Migration version number. |
+| `dirty`   | `boolean NN` | Indicates whether a migration was successful. |
+
+**purpose**: Ensures the database schema is versioned and migrations are tracked.
+
+---
+
+### **summary of relationships**
+- **One `question` -> Many `answers`** (each question has multiple possible answers).
+- **One `answer` -> Leads to another question** (via `next_question_ulid`).
+- **One `answer` -> Many `answers_flow`** (tracks the valid paths a user can take).
+- **One `answer` -> Many `exclusions`** (if selected, recommendations are removed).
+- **One `answer` -> Many `recommendations`** (certain answers lead to treatment suggestions).
+- **One `recommendation` -> One `product`** (each recommendation links to a product).
+
+---
+
+### **why this design?**
+This schema provides:
+- **flexibility** – New questions, answers, and recommendations can be added without modifying code.  
+- **scalability** – Supports complex branching logic efficiently.  
+- **performance** – Optimized using **ULID-based lookups** and **predefined flows**.  
+
+-> *With this setup, all logic is defined in the database, minimizing business logic in the API.*
 
 ## testing approach
 
