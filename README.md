@@ -302,6 +302,27 @@ latest_answer AS (
 
 4. Although the Frontend will control the questionnaire flux, I've implemented at least a basic answers sequence check to guard the backend. This logic could be revisited at any time, for sure. 
 
+### **why ULID instead of UUID?**  
+
+#### **1. lexicographical sorting**  
+- **ULIDs are time-ordered**, meaning that newer records always appear later in a sorted index.
+- This improves database **index locality**, leading to **faster** query performance when fetching recent records.
+
+#### **2. readability**  
+- ULIDs are **26-character base32 encoded** strings (e.g., `01JKZMRNXVQ4QSJ548FBSV1GJX`).
+- UUIDs (`xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx`) are **longer** and **harder to read**.
+
+#### **3. performance in indexing & queries**  
+- UUIDs are **random**, so inserting them into indexed tables can cause **fragmentation** in **B-Trees**, affecting performance.
+- ULIDs, being **time-ordered**, avoid this issue by keeping index inserts sequential.
+
+#### **4. compatibility with UUID**  
+- ULIDs can still fit in `TEXT` columns.
+- If necessary, we can convert them into a **UUID-like format**.
+
+#### **5. ULIDs are unique across distributed systems**  
+- Like UUIDs, ULIDs can be **generated without coordination**, ensuring uniqueness.
+
 ## data model explanation
 
 The ERD was generated using [dbdiagram.io](https://dbdiagram.io/) and is structured to support a dynamic questionnaire flow with recommendations and exclusions. Below is a detailed breakdown of each table and its purpose.
